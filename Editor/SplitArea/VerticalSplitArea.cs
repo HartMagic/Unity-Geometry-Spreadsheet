@@ -42,7 +42,7 @@
             {
                 _splitLinePosition = Mathf.Clamp(CurrentEvent.mousePosition.y - _splitLineOffset, SplitAreaStyles.Margin.x,
                     _parent.position.height - SplitAreaStyles.Margin.y);
-                _parent.Repaint();
+                GUI.changed = true;
             }
 
             if (CurrentEvent.type == EventType.MouseUp)

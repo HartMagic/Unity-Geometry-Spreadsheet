@@ -43,23 +43,24 @@
             }
             
             _previewRender.BeginPreview(rect, GUIStyle.none);
-            RenderMesh();
+            RenderMesh(rect);
             _previewRender.EndAndDrawPreview(rect);
         }
 
         public void Dispose()
         {
             _previewRender.Cleanup();
-            MeshViewUtility.CleanUp();
+            _meshViewSettings.Dispose();
         }
 
-        private void RenderMesh()
+        private void RenderMesh(Rect rect)
         {
             if(_target == null)
                 return;
             
             // perspective camera
             InitializePerspectiveCamera(_previewRender.camera);
+            HandlePerspectiveCameraPan(rect);
 
             RenderShadedMesh(_previewRender.camera);
         }
@@ -107,7 +108,7 @@
             var previousFogFlag = RenderSettings.fog;
             Unsupported.SetRenderSettingsUseFogNoDirty(false);
 
-            if (MeshViewUtility.ShadedMaterial != null)
+            if (_meshViewSettings.ShadedMaterial != null)
             {
                 var subMeshCount = _target.subMeshCount;
                 var materialPropertyBlock = new MaterialPropertyBlock();
@@ -117,7 +118,7 @@
                 for (var i = 0; i < subMeshCount; i++)
                 {
                     materialPropertyBlock.SetColor(MeshViewSettings.ColorPropertyId, MeshViewUtility.GetSubMeshColor(i));
-                    _previewRender.DrawMesh(_target, position, rotation, MeshViewUtility.ShadedMaterial, i, materialPropertyBlock);
+                    _previewRender.DrawMesh(_target, position, rotation, _meshViewSettings.ShadedMaterial, i, materialPropertyBlock);
                 }
                 
                 _previewRender.Render();
@@ -125,10 +126,50 @@
 
             Unsupported.SetRenderSettingsUseFogNoDirty(previousFogFlag);
         }
+
+        private void HandlePerspectiveCameraPan(Rect rect)
+        {
+            var controlId = GUIUtility.GetControlID(GetHashCode(), FocusType.Passive);
+            switch (CurrentEvent.GetTypeForControl(controlId))
+            {
+                case EventType.MouseDown:
+                    if (rect.Contains(CurrentEvent.mousePosition))
+                    {
+                        GUIUtility.hotControl = controlId;
+                        CurrentEvent.Use();
+                        EditorGUIUtility.SetWantsMouseJumping(1);
+                    }
+
+                    break;
+                case EventType.MouseUp:
+                    if (GUIUtility.hotControl == controlId)
+                        GUIUtility.hotControl = 0;
+                    EditorGUIUtility.SetWantsMouseJumping(0);
+                    break;
+                case EventType.MouseDrag:
+                    if (GUIUtility.hotControl == controlId)
+                    {
+                        var delta = CurrentEvent.delta * (CurrentEvent.shift ? MeshViewSettings.ShiftRotationSpeed : MeshViewSettings.DefaultRotationSpeed) /
+                            Mathf.Min(rect.width, rect.height) * MeshViewSettings.AspectMultiplier;
+                        _meshViewSettings.Direction -= delta;
+                        CurrentEvent.Use();
+                        GUI.changed = true;
+                    }
+
+                    break;
+            }
+        }
     }
 
-    internal class MeshViewSettings
+    internal class MeshViewSettings : IDisposable
     {
+        private Material _shadedMaterial;
+        
+        public const float DefaultRotationSpeed = 1.0f;
+        public const float ShiftRotationSpeed = 3.0f;
+
+        public const float AspectMultiplier = 140.0f;
+        
         public const float FieldOfView = 30.0f;
         
         public const float NearClipPlane = 0.0001f;
@@ -143,9 +184,31 @@
         
         public Vector3 PivotOffset = Vector3.zero;
         
-        public Vector2 LightDirection = Vector2.zero;
+        public Vector2 LightDirection = new Vector2(-40, -40);
         
-        public Vector2 Direction = Vector2.zero;
+        public Vector2 Direction = new Vector2(130.0f, 0.0f);
+        
+        public Material ShadedMaterial
+        {
+            get
+            {
+                if (_shadedMaterial == null)
+                    _shadedMaterial = CreateShadedMaterial();
+
+                return _shadedMaterial;
+            }
+        }
+        
+        private static Material CreateShadedMaterial()
+        {
+            return new Material(Shader.Find("Standard"));
+        }
+
+        public void Dispose()
+        {
+            if(_shadedMaterial != null)
+                Object.DestroyImmediate(_shadedMaterial);
+        }
     }
 
     internal static class MeshViewStyles
@@ -158,19 +221,6 @@
 
     internal static class MeshViewUtility
     {
-        private static Material _shadedMaterial;
-
-        public static Material ShadedMaterial
-        {
-            get
-            {
-                if (_shadedMaterial == null)
-                    _shadedMaterial = CreateShadedMaterial();
-
-                return _shadedMaterial;
-            }
-        }
-
         public static Color GetSubMeshColor(int index)
         {
             var hue = Mathf.Repeat(index * 0.618f, 1);
@@ -178,17 +228,6 @@
             const float value = 1.0f;
 
             return Color.HSVToRGB(hue, saturation, value);
-        }
-
-        public static void CleanUp()
-        {
-            if(_shadedMaterial != null)
-                Object.DestroyImmediate(_shadedMaterial);
-        }
-
-        private static Material CreateShadedMaterial()
-        {
-            return new Material(Shader.Find("Standard"));
         }
     }
 }
