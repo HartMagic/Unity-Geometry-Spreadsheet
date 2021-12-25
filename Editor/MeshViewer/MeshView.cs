@@ -60,7 +60,16 @@
             
             // perspective camera
             InitializePerspectiveCamera(_previewRender.camera);
-            HandlePerspectiveCameraPan(rect);
+            
+            if(CurrentEvent.button == 0)
+                _meshViewSettings.Direction = HandlePerspectiveRotation(_meshViewSettings.Direction, rect);
+            if (CurrentEvent.button == 1)
+                _meshViewSettings.LightDirection = HandlePerspectiveRotation(_meshViewSettings.LightDirection, rect);
+
+            if(CurrentEvent.button == 2)
+                HandlePerspectivePan(rect, _previewRender.camera);
+            
+            HandleZoom(rect, _previewRender.camera);
 
             RenderShadedMesh(_previewRender.camera);
         }
@@ -127,7 +136,7 @@
             Unsupported.SetRenderSettingsUseFogNoDirty(previousFogFlag);
         }
 
-        private void HandlePerspectiveCameraPan(Rect rect)
+        private Vector2 HandlePerspectiveRotation(Vector2 direction, Rect rect)
         {
             var controlId = GUIUtility.GetControlID(GetHashCode(), FocusType.Passive);
             switch (CurrentEvent.GetTypeForControl(controlId))
@@ -151,13 +160,52 @@
                     {
                         var delta = CurrentEvent.delta * (CurrentEvent.shift ? MeshViewSettings.ShiftRotationSpeed : MeshViewSettings.DefaultRotationSpeed) /
                             Mathf.Min(rect.width, rect.height) * MeshViewSettings.AspectMultiplier;
-                        _meshViewSettings.Direction -= delta;
+                        direction -= delta;
                         CurrentEvent.Use();
                         GUI.changed = true;
                     }
 
                     break;
             }
+
+            return direction;
+        }
+
+        private void HandlePerspectivePan(Rect rect, Camera camera)
+        {
+            if(CurrentEvent.type != EventType.MouseDrag || !rect.Contains(CurrentEvent.mousePosition))
+                return;
+            
+            var delta = new Vector3(-CurrentEvent.delta.x * camera.pixelWidth / rect.width,
+                CurrentEvent.delta.y * camera.pixelHeight / rect.height, 0.0f);
+
+            var screenPosition = camera.WorldToScreenPoint(_meshViewSettings.PivotOffset);
+            screenPosition += delta;
+            var worldPosition = camera.ScreenToWorldPoint(screenPosition) - _meshViewSettings.PivotOffset;
+
+            _meshViewSettings.PivotOffset += worldPosition;
+            
+            CurrentEvent.Use();
+        }
+
+        private void HandleZoom(Rect rect, Camera camera)
+        {
+            if (CurrentEvent.type != EventType.ScrollWheel)
+                return;
+            
+            var zoomDelta = -(HandleUtility.niceMouseDeltaZoom * 0.5f) * 0.05f;
+            var newZoom = _meshViewSettings.Zoom + _meshViewSettings.Zoom * zoomDelta;
+            newZoom = Mathf.Clamp(newZoom, MeshViewSettings.MinZoom, MeshViewSettings.MaxZoom);
+            
+            var mouseViewPosition = new Vector2(CurrentEvent.mousePosition.x / rect.width, 1.0f - CurrentEvent.mousePosition.y / rect.height);
+            var mouseWorldPosition = camera.ViewportToWorldPoint(mouseViewPosition);
+            var mouseToCameraPosition = _meshViewSettings.Position - mouseWorldPosition;
+            var cameraPosition = mouseWorldPosition + mouseToCameraPosition * (newZoom / _meshViewSettings.Zoom);
+            
+            camera.transform.position = new Vector3(cameraPosition.x, cameraPosition.y, cameraPosition.z);
+
+            _meshViewSettings.Zoom = newZoom;
+            CurrentEvent.Use();
         }
     }
 
@@ -180,14 +228,18 @@
 
         public static readonly int ColorPropertyId = Shader.PropertyToID("_Color");
 
+        public const float MinZoom = 0.1f;
+        public const float MaxZoom = 10.0f;
+        
         public float Zoom = 1.0f;
         
         public Vector3 PivotOffset = Vector3.zero;
+        public Vector3 Position = new Vector3(0.5f, 0.5f, -1.0f);
         
         public Vector2 LightDirection = new Vector2(-40, -40);
         
         public Vector2 Direction = new Vector2(130.0f, 0.0f);
-        
+
         public Material ShadedMaterial
         {
             get
