@@ -53,18 +53,31 @@
             _meshViewSettings.Dispose();
         }
         
-        #region GUIRendering
+        #region SettingsPanelRendering
 
         private void DrawSettingsPanel(Rect rect)
         {
             GUI.enabled = ShaderUtil.hardwareSupportsRectRenderTexture && _target != null;
+            {
+                GUI.Box(rect, string.Empty, EditorStyles.inspectorDefaultMargins);
 
-            GUI.Box(rect, string.Empty, EditorStyles.inspectorDefaultMargins);
+                GUILayout.BeginArea(rect);
+                {
+                    EditorGUILayout.BeginHorizontal();
 
-            EditorGUILayout.BeginHorizontal();
-            
-            EditorGUILayout.EndHorizontal();
-            
+                    GUILayout.FlexibleSpace();
+
+                    var wireframeToggleWidth = EditorStyles.toolbarButton.CalcSize(MeshViewStyles.WireframeToggle).x;
+                    var wireframeToggleRect = EditorGUILayout.GetControlRect(GUILayout.Width(wireframeToggleWidth));
+
+                    _meshViewSettings.IsWireframeShowed = GUI.Toggle(wireframeToggleRect,
+                        _meshViewSettings.IsWireframeShowed, MeshViewStyles.WireframeToggle,
+                        EditorStyles.toolbarButton);
+
+                    EditorGUILayout.EndHorizontal();
+                }
+                GUILayout.EndArea();
+            }
             GUI.enabled = true;
         }
 
@@ -170,23 +183,58 @@
             var previousFogFlag = RenderSettings.fog;
             Unsupported.SetRenderSettingsUseFogNoDirty(false);
 
-            if (_meshViewSettings.ShadedMaterial != null)
-            {
-                var subMeshCount = _target.subMeshCount;
-                var materialPropertyBlock = new MaterialPropertyBlock();
-
-                camera.clearFlags = CameraClearFlags.Nothing;
-
-                for (var i = 0; i < subMeshCount; i++)
-                {
-                    materialPropertyBlock.SetColor(MeshViewSettings.ColorPropertyId, MeshViewUtility.GetSubMeshColor(i));
-                    _previewRender.DrawMesh(_target, position, rotation, _meshViewSettings.ShadedMaterial, i, materialPropertyBlock);
-                }
-                
-                _previewRender.Render();
-            }
+            DrawSolidMesh(camera, position, rotation);
+            DrawWireframeMesh(camera, position, rotation);
 
             Unsupported.SetRenderSettingsUseFogNoDirty(previousFogFlag);
+        }
+
+        private void DrawSolidMesh(Camera camera, Vector3 position, Quaternion rotation)
+        {
+            if(_meshViewSettings.ShadedMaterial == null)
+                return;
+            
+            var materialPropertyBlock = new MaterialPropertyBlock();
+
+            camera.clearFlags = CameraClearFlags.Nothing;
+
+            for (var i = 0; i < _target.subMeshCount; i++)
+            {
+                materialPropertyBlock.SetColor(MeshViewSettings.ColorPropertyId, MeshViewUtility.GetSubMeshColor(i));
+                _previewRender.DrawMesh(_target, position, rotation, _meshViewSettings.ShadedMaterial, i, materialPropertyBlock);
+            }
+                
+            _previewRender.Render();
+        }
+
+        private void DrawWireframeMesh(Camera camera, Vector3 position, Quaternion rotation)
+        {
+            if(_meshViewSettings.WireframeMaterial == null || !_meshViewSettings.IsWireframeShowed)
+                return;
+            
+            var materialPropertyBlock = new MaterialPropertyBlock();
+
+            camera.clearFlags = CameraClearFlags.Nothing;
+            
+            GL.wireframe = true;
+            {
+                materialPropertyBlock.SetColor(MeshViewSettings.ColorPropertyId,
+                    _meshViewSettings.WireframeMaterial.color);
+
+                for (var i = 0; i < _target.subMeshCount; i++)
+                {
+                    var topology = _target.GetTopology(i);
+                    if (topology == MeshTopology.Lines || topology == MeshTopology.LineStrip ||
+                        topology == MeshTopology.Points)
+                        continue;
+
+                    _previewRender.DrawMesh(_target, position, rotation, _meshViewSettings.ShadedMaterial, i,
+                        materialPropertyBlock);
+                }
+
+                _previewRender.Render();
+            }
+            GL.wireframe = false;
         }
 
         private Vector2 HandlePerspectiveRotation(Vector2 direction, Rect rect)

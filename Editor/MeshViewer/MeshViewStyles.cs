@@ -1,5 +1,8 @@
 ﻿namespace GeometrySpreadsheet.Editor.MeshViewer
 {
+    using UnityEditor;
+    using UnityEngine;
+
     internal static class MeshViewStyles
     {
         public const string RenderTextureNotSupportedMessage = "Mesh view requires render texture support";
@@ -11,5 +14,7 @@
 
         public const float MeshInfoHeight = 40.0f;
         public const float MeshInfoMargin = 6.0f;
+
+        public static readonly GUIContent WireframeToggle = EditorGUIUtility.TrTextContent("Wireframe", "Show wireframe");
     }
 }
