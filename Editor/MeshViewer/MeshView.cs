@@ -3,7 +3,6 @@
     using System;
     using UnityEditor;
     using UnityEngine;
-    using Object = UnityEngine.Object;
 
     internal sealed class MeshView : IDisposable
     {
@@ -11,6 +10,15 @@
         private readonly MeshViewSettings _meshViewSettings;
 
         private readonly PreviewRenderUtility _previewRender;
+        
+        private float _zoom = 1.0f;
+        
+        private Vector3 _pivotOffset = Vector3.zero;
+        private  Vector3 _position = new Vector3(0.5f, 0.5f, -1.0f);
+        
+        private Vector2 _lightDirection = new Vector2(-40, -40);
+        
+        private Vector2 _direction = new Vector2(130.0f, 0.0f);
         
         private static Event CurrentEvent => Event.current;
 
@@ -62,9 +70,9 @@
             InitializePerspectiveCamera(_previewRender.camera);
             
             if(CurrentEvent.button == 0)
-                _meshViewSettings.Direction = HandlePerspectiveRotation(_meshViewSettings.Direction, rect);
+                _direction = HandlePerspectiveRotation(_direction, rect);
             if (CurrentEvent.button == 1)
-                _meshViewSettings.LightDirection = HandlePerspectiveRotation(_meshViewSettings.LightDirection, rect);
+                _lightDirection = HandlePerspectiveRotation(_lightDirection, rect);
 
             if(CurrentEvent.button == 2)
                 HandlePerspectivePan(rect, _previewRender.camera);
@@ -85,8 +93,8 @@
             var rotation = Quaternion.identity;
 
             var distance = 4.0f * _target.bounds.extents.magnitude;
-            var position = rotation * Vector3.forward * (-distance * _meshViewSettings.Zoom) +
-                           _meshViewSettings.PivotOffset;
+            var position = rotation * Vector3.forward * (-distance * _zoom) +
+                           _pivotOffset;
 
             var cameraTransform = camera.transform;
             cameraTransform.position = position;
@@ -99,19 +107,19 @@
         {
             var firstLight = _previewRender.lights[0];
             firstLight.intensity = MeshViewSettings.LightIntensity;
-            firstLight.transform.rotation = Quaternion.Euler(_meshViewSettings.LightDirection.y, _meshViewSettings.LightDirection.x, 0.0f);
+            firstLight.transform.rotation = Quaternion.Euler(_lightDirection.y, _lightDirection.x, 0.0f);
 
             var secondLight = _previewRender.lights[1];
             secondLight.intensity = MeshViewSettings.LightIntensity;
-            secondLight.transform.rotation = Quaternion.Euler(-_meshViewSettings.LightDirection.y, -_meshViewSettings.LightDirection.x, 0.0f);
+            secondLight.transform.rotation = Quaternion.Euler(-_lightDirection.y, -_lightDirection.x, 0.0f);
 
             _previewRender.ambientColor = MeshViewSettings.AmbientColor;
         }
 
         private void RenderShadedMesh(Camera camera)
         {
-            var rotation = Quaternion.Euler(_meshViewSettings.Direction.y, 0.0f, 0.0f) *
-                           Quaternion.Euler(0.0f, _meshViewSettings.Direction.x, 0.0f);
+            var rotation = Quaternion.Euler(_direction.y, 0.0f, 0.0f) *
+                           Quaternion.Euler(0.0f, _direction.x, 0.0f);
             var position = rotation * -_target.bounds.center;
 
             var previousFogFlag = RenderSettings.fog;
@@ -179,11 +187,11 @@
             var delta = new Vector3(-CurrentEvent.delta.x * camera.pixelWidth / rect.width,
                 CurrentEvent.delta.y * camera.pixelHeight / rect.height, 0.0f);
 
-            var screenPosition = camera.WorldToScreenPoint(_meshViewSettings.PivotOffset);
+            var screenPosition = camera.WorldToScreenPoint(_pivotOffset);
             screenPosition += delta;
-            var worldPosition = camera.ScreenToWorldPoint(screenPosition) - _meshViewSettings.PivotOffset;
+            var worldPosition = camera.ScreenToWorldPoint(screenPosition) - _pivotOffset;
 
-            _meshViewSettings.PivotOffset += worldPosition;
+            _pivotOffset += worldPosition;
             
             CurrentEvent.Use();
         }
@@ -194,92 +202,18 @@
                 return;
             
             var zoomDelta = -(HandleUtility.niceMouseDeltaZoom * 0.5f) * 0.05f;
-            var newZoom = _meshViewSettings.Zoom + _meshViewSettings.Zoom * zoomDelta;
+            var newZoom = _zoom + _zoom * zoomDelta;
             newZoom = Mathf.Clamp(newZoom, MeshViewSettings.MinZoom, MeshViewSettings.MaxZoom);
             
             var mouseViewPosition = new Vector2(CurrentEvent.mousePosition.x / rect.width, 1.0f - CurrentEvent.mousePosition.y / rect.height);
             var mouseWorldPosition = camera.ViewportToWorldPoint(mouseViewPosition);
-            var mouseToCameraPosition = _meshViewSettings.Position - mouseWorldPosition;
-            var cameraPosition = mouseWorldPosition + mouseToCameraPosition * (newZoom / _meshViewSettings.Zoom);
+            var mouseToCameraPosition = _position - mouseWorldPosition;
+            var cameraPosition = mouseWorldPosition + mouseToCameraPosition * (newZoom / _zoom);
             
             camera.transform.position = new Vector3(cameraPosition.x, cameraPosition.y, cameraPosition.z);
 
-            _meshViewSettings.Zoom = newZoom;
+            _zoom = newZoom;
             CurrentEvent.Use();
-        }
-    }
-
-    internal class MeshViewSettings : IDisposable
-    {
-        private Material _shadedMaterial;
-        
-        public const float DefaultRotationSpeed = 1.0f;
-        public const float ShiftRotationSpeed = 3.0f;
-
-        public const float AspectMultiplier = 140.0f;
-        
-        public const float FieldOfView = 30.0f;
-        
-        public const float NearClipPlane = 0.0001f;
-        public const float FarClipPlane = 1000.0f;
-        
-        public static readonly Color AmbientColor = new Color(0.1f, 0.1f, 0.1f, 0.0f);
-        public const float LightIntensity = 1.1f;
-
-        public static readonly int ColorPropertyId = Shader.PropertyToID("_Color");
-
-        public const float MinZoom = 0.1f;
-        public const float MaxZoom = 10.0f;
-        
-        public float Zoom = 1.0f;
-        
-        public Vector3 PivotOffset = Vector3.zero;
-        public Vector3 Position = new Vector3(0.5f, 0.5f, -1.0f);
-        
-        public Vector2 LightDirection = new Vector2(-40, -40);
-        
-        public Vector2 Direction = new Vector2(130.0f, 0.0f);
-
-        public Material ShadedMaterial
-        {
-            get
-            {
-                if (_shadedMaterial == null)
-                    _shadedMaterial = CreateShadedMaterial();
-
-                return _shadedMaterial;
-            }
-        }
-        
-        private static Material CreateShadedMaterial()
-        {
-            return new Material(Shader.Find("Standard"));
-        }
-
-        public void Dispose()
-        {
-            if(_shadedMaterial != null)
-                Object.DestroyImmediate(_shadedMaterial);
-        }
-    }
-
-    internal static class MeshViewStyles
-    {
-        public const string RenderTextureNotSupportedMessage = "Mesh view requires render texture support";
-        
-        public const float RenderTextureNotSupportedWidth = 300.0f;
-        public const float RenderTextureNotSupportedHeight = 40.0f;
-    }
-
-    internal static class MeshViewUtility
-    {
-        public static Color GetSubMeshColor(int index)
-        {
-            var hue = Mathf.Repeat(index * 0.618f, 1);
-            var saturation = index == 0 ? 0.0f : 0.3f;
-            const float value = 1.0f;
-
-            return Color.HSVToRGB(hue, saturation, value);
         }
     }
 }
