@@ -1,14 +1,16 @@
 ﻿namespace GeometrySpreadsheet.Editor.MeshViewer
 {
     using System;
+    using System.Text;
     using UnityEditor;
     using UnityEngine;
+    using UnityEngine.Rendering;
 
     internal sealed class MeshView : IDisposable
     {
-        private readonly Mesh _target;
+        private Mesh _target;
+        
         private readonly MeshViewSettings _meshViewSettings;
-
         private readonly PreviewRenderUtility _previewRender;
         
         private float _zoom = 1.0f;
@@ -31,7 +33,46 @@
             _previewRender = new PreviewRenderUtility();
         }
 
+        public void SetTarget(Mesh target)
+        {
+            _target = target;
+        }
+
         public void OnGUI(Rect rect)
+        {
+            var settingsRect = new Rect(rect.x, rect.yMax - MeshViewStyles.SettingsPanelHeight, rect.width, MeshViewStyles.SettingsPanelHeight);
+            DrawSettingsPanel(settingsRect);
+            
+            var meshViewRect = new Rect(rect.x, rect.y, rect.width, rect.height - MeshViewStyles.SettingsPanelHeight);
+            DrawMeshView(meshViewRect);
+        }
+
+        public void Dispose()
+        {
+            _previewRender.Cleanup();
+            _meshViewSettings.Dispose();
+        }
+        
+        #region GUIRendering
+
+        private void DrawSettingsPanel(Rect rect)
+        {
+            GUI.enabled = ShaderUtil.hardwareSupportsRectRenderTexture && _target != null;
+
+            GUI.Box(rect, string.Empty, EditorStyles.inspectorDefaultMargins);
+
+            EditorGUILayout.BeginHorizontal();
+            
+            EditorGUILayout.EndHorizontal();
+            
+            GUI.enabled = true;
+        }
+
+        #endregion
+
+        #region MeshRendering
+
+        private void DrawMeshView(Rect rect)
         {
             if (!ShaderUtil.hardwareSupportsRectRenderTexture)
             {
@@ -49,19 +90,23 @@
 
                 return;
             }
-            
+
             _previewRender.BeginPreview(rect, GUIStyle.none);
-            RenderMesh(rect);
+            DrawMesh(rect);
             _previewRender.EndAndDrawPreview(rect);
+            
+            DrawMeshInfo(rect);
         }
 
-        public void Dispose()
+        private void DrawMeshInfo(Rect rect)
         {
-            _previewRender.Cleanup();
-            _meshViewSettings.Dispose();
+            var meshInfo = MeshViewUtility.GetMeshInfo(_target);
+
+            EditorGUI.DropShadowLabel(new Rect(rect.x, rect.yMax - (MeshViewStyles.MeshInfoHeight + MeshViewStyles.MeshInfoMargin), 
+                rect.width, MeshViewStyles.MeshInfoHeight), meshInfo);
         }
 
-        private void RenderMesh(Rect rect)
+        private void DrawMesh(Rect rect)
         {
             if(_target == null)
                 return;
@@ -215,5 +260,7 @@
             _zoom = newZoom;
             CurrentEvent.Use();
         }
+        
+        #endregion
     }
 }

@@ -26,7 +26,7 @@ namespace GeometrySpreadsheet.Editor
             
             _verticalSplitArea.OnGUI();
             
-            _meshView?.OnGUI(_verticalSplitArea.FirstRect);
+            _meshView.OnGUI(_verticalSplitArea.FirstRect);
         }
 
         private void OnEnable()
@@ -49,11 +49,13 @@ namespace GeometrySpreadsheet.Editor
             minSize = new Vector2(256.0f, 256.0f);
             
             _verticalSplitArea = new VerticalSplitArea(this);
+            
+            CreateOrUpdateMeshView();
         }
 
         private void Dispose()
         {
-            _meshView?.Dispose();
+            _meshView.Dispose();
         }
         
         private void OnSelectionChanged()
@@ -64,9 +66,8 @@ namespace GeometrySpreadsheet.Editor
             }
 
             _selectedMesh = selectedMesh;
+            _meshView.SetTarget(_selectedMesh);
 
-            CreateOrUpdateMeshView();
-            
             Repaint();
         }
 
