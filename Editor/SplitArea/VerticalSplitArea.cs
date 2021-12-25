@@ -12,6 +12,8 @@
 
         private bool _isResizing;
         
+        private static Event CurrentEvent => Event.current;
+        
         public Rect FirstRect => new Rect(0.0f, 0.0f, _parent.position.width, _splitLinePosition);
         public Rect SecondRect => new Rect(0.0f, _splitLinePosition, _parent.position.width, _parent.position.height - _splitLinePosition);
 
@@ -30,20 +32,20 @@
             var drawSplitLineRect = new Rect(0.0f, _splitLinePosition, _parent.position.width, 1.0f);
             EditorGUI.DrawRect(drawSplitLineRect, SplitAreaStyles.SplitLineColor);
 
-            if (Event.current.type == EventType.MouseDown && splitLineRect.Contains(Event.current.mousePosition))
+            if (CurrentEvent.type == EventType.MouseDown && splitLineRect.Contains(CurrentEvent.mousePosition))
             {
-                _splitLineOffset = Event.current.mousePosition.y - _splitLinePosition;
+                _splitLineOffset = CurrentEvent.mousePosition.y - _splitLinePosition;
                 _isResizing = true;
             }
 
             if (_isResizing)
             {
-                _splitLinePosition = Mathf.Clamp(Event.current.mousePosition.y - _splitLineOffset, SplitAreaStyles.Margin.x,
+                _splitLinePosition = Mathf.Clamp(CurrentEvent.mousePosition.y - _splitLineOffset, SplitAreaStyles.Margin.x,
                     _parent.position.height - SplitAreaStyles.Margin.y);
                 _parent.Repaint();
             }
 
-            if (Event.current.type == EventType.MouseUp)
+            if (CurrentEvent.type == EventType.MouseUp)
             {
                 _isResizing = false;
             }
