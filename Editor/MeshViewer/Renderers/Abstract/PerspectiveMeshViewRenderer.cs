@@ -3,13 +3,13 @@
     using UnityEditor;
     using UnityEngine;
 
-    public abstract class PerspectiveMeshViewRender : MeshViewRender
+    public abstract class PerspectiveMeshViewRenderer : MeshViewRenderer
     {
-        protected PerspectiveMeshViewRender(MeshViewRender wireframeOverride) : base(wireframeOverride)
+        protected PerspectiveMeshViewRenderer(MeshViewRenderer wireframeOverride) : base(wireframeOverride)
         {
         }
 
-        internal override void InitializeCamera()
+        public override void InitializeCamera()
         {
             Camera.orthographic = false;
             
@@ -27,7 +27,7 @@
             cameraTransform.rotation = rotation;
         }
 
-        internal override void InitializeLights()
+        public override void InitializeLights()
         {
             var firstLight = RenderContext.lights[0];
             firstLight.intensity = MeshViewSettings.LightIntensity;
@@ -38,6 +38,19 @@
             secondLight.transform.rotation = Quaternion.Euler(-RenderState.LightDirection.y, -RenderState.LightDirection.x, 0.0f);
 
             RenderContext.ambientColor = MeshViewSettings.AmbientColor;
+        }
+
+        public override void HandleUserInput(Rect rect)
+        {
+            if(CurrentEvent.button == 0)
+                RenderState.Direction = HandlePerspectiveRotation(RenderState.Direction, rect);
+            if (CurrentEvent.button == 1)
+                RenderState.LightDirection = HandlePerspectiveRotation(RenderState.LightDirection, rect);
+
+            if(CurrentEvent.button == 2)
+                HandlePerspectivePan(rect, Camera);
+            
+            HandleZoom(rect, Camera);
         }
         
         protected sealed override void Render()
@@ -59,19 +72,6 @@
         }
 
         protected abstract void RenderInternal(Vector3 position, Quaternion rotation, MaterialPropertyBlock materialPropertyBlock);
-
-        internal override void HandleUserInput(Rect rect)
-        {
-            if(CurrentEvent.button == 0)
-                RenderState.Direction = HandlePerspectiveRotation(RenderState.Direction, rect);
-            if (CurrentEvent.button == 1)
-                RenderState.LightDirection = HandlePerspectiveRotation(RenderState.LightDirection, rect);
-
-            if(CurrentEvent.button == 2)
-                HandlePerspectivePan(rect, Camera);
-            
-            HandleZoom(rect, Camera);
-        }
         
         private Vector2 HandlePerspectiveRotation(Vector2 direction, Rect rect)
         {

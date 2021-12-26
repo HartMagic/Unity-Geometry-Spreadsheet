@@ -77,7 +77,11 @@ namespace GeometrySpreadsheet.Editor
             _meshView?.Dispose();
 
             _meshView = new MeshView(_selectedMesh);
-            _meshView.RegisterRender(new ShadedRender(new WireframeRender()));
+            
+            var perspectiveWireframeRender = new WireframeRenderer();
+            
+            _meshView.RegisterRender(new ShadedRenderer(perspectiveWireframeRender));
+            _meshView.RegisterRender(new UvCheckerRenderer(perspectiveWireframeRender));
         }
     }
 }

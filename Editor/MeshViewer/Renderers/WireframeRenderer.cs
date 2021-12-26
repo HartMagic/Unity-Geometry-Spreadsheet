@@ -3,15 +3,17 @@
     using Abstract;
     using UnityEngine;
 
-    public sealed class WireframeRender : PerspectiveMeshViewRender
+    public sealed class WireframeRenderer : PerspectiveMeshViewRenderer
     {
+        private const string ShaderName = "Hidden/GeometrySpreadsheet/InternalDefault";
+        
         private static readonly int ColorPropertyId = Shader.PropertyToID("_Color");
         private static readonly int ZWritePropertyId = Shader.PropertyToID("_ZWrite");
         private static readonly int ZBiasPropertyId = Shader.PropertyToID("_ZBias");
         
         public override string DisplayName => "Wireframe";
         
-        public WireframeRender() : base(null)
+        public WireframeRenderer() : base(null)
         {
         }
         
@@ -38,7 +40,7 @@
 
         protected override Material CreateMaterial()
         {
-            var shader = Shader.Find("Hidden/GeometrySpreadsheet/InternalDefault");
+            var shader = Shader.Find(ShaderName);
             if (shader == null)
             {
                 Debug.LogWarning("Wireframe shader has not FOUND");

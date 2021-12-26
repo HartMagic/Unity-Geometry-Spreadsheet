@@ -5,7 +5,9 @@
     using UnityEngine;
     using Object = UnityEngine.Object;
 
-    public abstract class MeshViewRender : IDisposable
+    public delegate void SettingsPanelCallback(Rect rect);
+    
+    public abstract class MeshViewRenderer : IDisposable
     {
         private Material _material;
 
@@ -36,9 +38,9 @@
         
         protected static Event CurrentEvent => Event.current;
 
-        public MeshViewRender WireframeOverride { get; }
+        public MeshViewRenderer WireframeOverride { get; }
 
-        protected MeshViewRender(MeshViewRender wireframeOverride)
+        protected MeshViewRenderer(MeshViewRenderer wireframeOverride)
         {
             WireframeOverride = wireframeOverride;
         }
@@ -51,13 +53,17 @@
             Render();
         }
 
+        public abstract void InitializeCamera();
+        public abstract void InitializeLights();
+
+        public abstract void HandleUserInput(Rect rect);
+
+        public virtual SettingsPanelCallback GetSettingsPanelCallback()
+        {
+            return null;
+        }
+
         protected abstract void Render();
-
-        internal abstract void InitializeCamera();
-        internal abstract void InitializeLights();
-
-        internal abstract void HandleUserInput(Rect rect);
-
         protected abstract Material CreateMaterial();
 
         internal void SetRenderState(RenderState renderState)

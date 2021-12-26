@@ -10,11 +10,11 @@
 
     internal sealed class MeshView : IDisposable
     {
-        private readonly List<MeshViewRender> _renders = new List<MeshViewRender>();
+        private readonly List<MeshViewRenderer> _renders = new List<MeshViewRenderer>();
 
         private readonly RenderState _renderState = new RenderState();
         
-        private MeshViewRender _currentRender;
+        private MeshViewRenderer _currentRenderer;
 
         private Mesh _target;
         
@@ -31,15 +31,15 @@
             _previewRender = new PreviewRenderUtility();
         }
 
-        public void RegisterRender(MeshViewRender render)
+        public void RegisterRender(MeshViewRenderer renderer)
         {
-            if(_renders.Contains(render))
+            if(_renders.Contains(renderer))
                 return;
 
-            InitializeRender(render);
-            _renders.Add(render);
+            InitializeRender(renderer);
+            _renders.Add(renderer);
 
-            _currentRender ??= render;
+            _currentRenderer ??= renderer;
         }
 
         public void SetTarget(Mesh target)
@@ -70,11 +70,11 @@
             _previewRender.Cleanup();
         }
 
-        private void InitializeRender(MeshViewRender render)
+        private void InitializeRender(MeshViewRenderer renderer)
         {
-            render.SetTarget(_target);
-            render.SetRenderContext(_previewRender);
-            render.SetRenderState(_renderState);
+            renderer.SetTarget(_target);
+            renderer.SetRenderContext(_previewRender);
+            renderer.SetRenderState(_renderState);
         }
 
         #region SettingsPanelRendering
@@ -91,6 +91,8 @@
 
                     GUILayout.FlexibleSpace();
 
+                    _currentRenderer?.GetSettingsPanelCallback()?.Invoke(rect);
+
                     DrawDisplayModeDropDown();
                     DrawWireframeToggle();
                     EditorGUILayout.EndHorizontal();
@@ -103,15 +105,15 @@
         private void DrawDisplayModeDropDown()
         {
             var displayModes = _renders.Select(x => x.DisplayName).ToArray();
-            var maxDisplayMode = MeshViewUtility.GetMaxDisplayMode(displayModes);
+            var maxDisplayMode = MeshViewUtility.GetMaxString(displayModes);
 
-            var currentDisplayModeIndex = _renders.IndexOf(_currentRender);
+            var currentDisplayModeIndex = _renders.IndexOf(_currentRenderer);
             var availableDisplayModes = _renders.Select(x => x.IsAvailable).ToArray();
 
             var displayModeDropDownWidth = EditorStyles.toolbarDropDown.CalcSize(new GUIContent(maxDisplayMode)).x;
-            var displayModeDropDownRect = EditorGUILayout.GetControlRect(GUILayout.Width(displayModeDropDownWidth));
+            var displayModeDropDownRect = EditorGUILayout.GetControlRect(GUILayout.MaxWidth(displayModeDropDownWidth), GUILayout.ExpandWidth(true));
 
-            var displayModeDropDownContent = MeshViewStyles.GetDisplayModeContent(_currentRender);
+            var displayModeDropDownContent = MeshViewStyles.GetDisplayModeContent(_currentRenderer);
             if (EditorGUI.DropdownButton(displayModeDropDownRect, displayModeDropDownContent, FocusType.Passive,
                 EditorStyles.toolbarDropDown))
             {
@@ -121,14 +123,18 @@
 
         private void SetDisplayMode(object index)
         {
-            
+            var popupIndex = (int) index;
+            if(popupIndex < 0 || popupIndex >= _renders.Count)
+                return;
+
+            _currentRenderer = _renders[popupIndex];
         }
 
         private void DrawWireframeToggle()
         {
-            GUI.enabled = _currentRender != null && _currentRender.IsWireframeSupported;
+            GUI.enabled = _currentRenderer != null && _currentRenderer.IsWireframeSupported;
             var wireframeToggleWidth = EditorStyles.toolbarButton.CalcSize(MeshViewStyles.WireframeToggle).x;
-            var wireframeToggleRect = EditorGUILayout.GetControlRect(GUILayout.Width(wireframeToggleWidth));
+            var wireframeToggleRect = EditorGUILayout.GetControlRect(GUILayout.MaxWidth(wireframeToggleWidth), GUILayout.ExpandWidth(true));
 
             _isWireframeShowed = GUI.Toggle(wireframeToggleRect,
                 _isWireframeShowed, MeshViewStyles.WireframeToggle,
@@ -176,19 +182,19 @@
 
         private void DrawMesh(Rect rect)
         {
-            if(_target == null || _currentRender == null)
+            if(_target == null || _currentRenderer == null)
                 return;
             
-            _currentRender.InitializeCamera();
-            _currentRender.InitializeLights();
+            _currentRenderer.InitializeCamera();
+            _currentRenderer.InitializeLights();
             
-            _currentRender.HandleUserInput(rect);
+            _currentRenderer.HandleUserInput(rect);
             
-            _currentRender.Draw();
+            _currentRenderer.Draw();
 
-            if (_currentRender.IsWireframeSupported && _isWireframeShowed)
+            if (_currentRenderer.IsWireframeSupported && _isWireframeShowed)
             {
-                var wireframeRender = _currentRender.WireframeOverride;
+                var wireframeRender = _currentRenderer.WireframeOverride;
                 wireframeRender?.Draw();
             }
         }

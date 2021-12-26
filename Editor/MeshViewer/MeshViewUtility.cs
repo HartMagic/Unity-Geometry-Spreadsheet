@@ -1,12 +1,22 @@
 ﻿namespace GeometrySpreadsheet.Editor.MeshViewer
 {
+    using System.Collections.Generic;
     using System.Text;
     using UnityEditor;
     using UnityEngine;
     using UnityEngine.Rendering;
 
-    internal static class MeshViewUtility
+    public static class MeshViewUtility
     {
+        public static IEnumerable<(string channel, bool isAvailable)> GetAvailableUvChannels(Mesh mesh)
+        {
+            for (var i = 4; i < 12; i++)
+            {
+                var isAvailable = mesh.HasVertexAttribute((VertexAttribute) i);
+                yield return ($"Channel {i - 4}", isAvailable);
+            }
+        }
+
         public static void DrawPopup(Rect popupRect, string[] elements, int selectedIndex,
             GenericMenu.MenuFunction2 func, bool[] disabledItems)
         {
@@ -39,21 +49,21 @@
             return Color.HSVToRGB(hue, saturation, value);
         }
         
-        public static string GetMaxDisplayMode(string[] displayModes)
+        public static string GetMaxString(IEnumerable<string> strings)
         {
             var maxLength = int.MinValue;
-            var maxDisplayMode = string.Empty;
+            var maxString = string.Empty;
 
-            foreach (var displayMode in displayModes)
+            foreach (var stringValue in strings)
             {
-                if (displayMode.Length > maxLength)
+                if (stringValue.Length > maxLength)
                 {
-                    maxLength = displayMode.Length;
-                    maxDisplayMode = displayMode;
+                    maxLength = stringValue.Length;
+                    maxString = stringValue;
                 }
             }
 
-            return string.IsNullOrEmpty(maxDisplayMode) ? "None" : maxDisplayMode;
+            return string.IsNullOrEmpty(maxString) ? "None" : maxString;
         }
         
         public static string GetMeshInfo(Mesh mesh)

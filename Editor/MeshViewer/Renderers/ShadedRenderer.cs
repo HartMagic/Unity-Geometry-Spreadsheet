@@ -3,13 +3,14 @@
     using Abstract;
     using UnityEngine;
 
-    public sealed class ShadedRender : PerspectiveMeshViewRender
+    public sealed class ShadedRenderer : PerspectiveMeshViewRenderer
     {
+        private const string ShaderName = "Standard";
         private static readonly int ColorPropertyId = Shader.PropertyToID("_Color");
         
         public override string DisplayName => "Shaded";
         
-        public ShadedRender(MeshViewRender wireframeOverride) : base(wireframeOverride)
+        public ShadedRenderer(MeshViewRenderer wireframeOverride) : base(wireframeOverride)
         {
         }
         
@@ -26,7 +27,7 @@
 
         protected override Material CreateMaterial()
         {
-            return new Material(Shader.Find("Standard"));
+            return new Material(Shader.Find(ShaderName));
         }
     }
 }

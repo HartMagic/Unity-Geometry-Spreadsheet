@@ -1,6 +1,5 @@
 ﻿namespace GeometrySpreadsheet.Editor.MeshViewer
 {
-    using Renderers;
     using Renderers.Abstract;
     using UnityEditor;
     using UnityEngine;
@@ -21,12 +20,19 @@
 
         public static readonly GUIContent DisplayModeDropDown = EditorGUIUtility.TrTextContent("", "Change display mode");
 
-        public static GUIContent GetDisplayModeContent(MeshViewRender currentRender)
+        public static readonly GUIContent UvChannelDropDown = EditorGUIUtility.TrTextContent("", "Change active UV channel");
+
+        public const float UvTextureMultiplierSliderWidth = 80.0f;
+
+        public static readonly GUIStyle PreSliderStyle = "preSlider";
+        public static readonly GUIStyle PreSliderThumbStyle = "preSliderThumb";
+
+        public static GUIContent GetDisplayModeContent(MeshViewRenderer currentRenderer)
         {
-            if(currentRender == null)
+            if(currentRenderer == null)
                 return new GUIContent("None", DisplayModeDropDown.tooltip);
             
-            return new GUIContent(currentRender.DisplayName, DisplayModeDropDown.tooltip);
+            return new GUIContent(currentRenderer.DisplayName, DisplayModeDropDown.tooltip);
         }
     }
 }
