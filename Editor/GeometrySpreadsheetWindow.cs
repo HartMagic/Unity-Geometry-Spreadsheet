@@ -76,7 +76,7 @@ namespace GeometrySpreadsheet.Editor
             _meshView?.Dispose();
 
             _meshView = new MeshView(_selectedMesh);
-            _meshView.RegisterRender(new ShadedRender());
+            _meshView.RegisterRender(new ShadedRender(new WireframeRender()));
         }
     }
 }

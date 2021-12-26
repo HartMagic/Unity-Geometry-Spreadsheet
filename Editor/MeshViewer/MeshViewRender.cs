@@ -8,10 +8,10 @@
     public abstract class MeshViewRender : IDisposable
     {
         private Material _material;
-        private MeshViewRender _wireframeOverride;
-        
+
         public abstract string DisplayName { get; }
-        public abstract bool IsWireframeSupported { get; }
+        
+        public bool IsWireframeSupported => WireframeOverride != null;
         
         protected Mesh Target { get; private set; }
         
@@ -34,20 +34,11 @@
         
         protected static Event CurrentEvent => Event.current;
 
-        public MeshViewRender WireframeOverride
-        {
-            get
-            {
-                if (_wireframeOverride == null)
-                {
-                    _wireframeOverride = CreateWireframeOverride();
-                    _wireframeOverride.SetTarget(Target);
-                    _wireframeOverride.SetRenderContext(RenderContext);
-                    _wireframeOverride.SetRenderState(RenderState);
-                }
+        public MeshViewRender WireframeOverride { get; }
 
-                return _wireframeOverride;
-            }
+        protected MeshViewRender(MeshViewRender wireframeOverride)
+        {
+            WireframeOverride = wireframeOverride;
         }
 
         internal abstract void Render();
@@ -57,34 +48,29 @@
 
         internal abstract void HandleUserInput(Rect rect);
 
-        internal virtual MeshViewRender CreateWireframeOverride()
-        {
-            return null;
-        }
-
         protected abstract Material CreateMaterial();
 
         internal void SetRenderState(RenderState renderState)
         {
             RenderState = renderState;
-            _wireframeOverride?.SetRenderState(renderState);
+            WireframeOverride?.SetRenderState(renderState);
         }
 
         internal void SetTarget(Mesh target)
         {
             Target = target;
-            _wireframeOverride?.SetTarget(target);
+            WireframeOverride?.SetTarget(target);
         }
 
         internal void SetRenderContext(PreviewRenderUtility renderUtility)
         {
             RenderContext = renderUtility;
-            _wireframeOverride?.SetRenderContext(renderUtility);
+            WireframeOverride?.SetRenderContext(renderUtility);
         }
 
         public void Dispose()
         {
-            _wireframeOverride?.Dispose();
+            WireframeOverride?.Dispose();
             
             if(_material != null)
                 Object.DestroyImmediate(_material);

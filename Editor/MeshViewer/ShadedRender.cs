@@ -9,6 +9,10 @@
         
         public override string DisplayName => "Shaded";
         
+        public ShadedRender(MeshViewRender wireframeOverride) : base(wireframeOverride)
+        {
+        }
+        
         internal override void Render()
         {
             if(Material == null)
@@ -34,11 +38,6 @@
             RenderContext.Render();
 
             Unsupported.SetRenderSettingsUseFogNoDirty(previousFogFlag);
-        }
-
-        internal override MeshViewRender CreateWireframeOverride()
-        {
-            return new WireframeRender();
         }
 
         protected override Material CreateMaterial()

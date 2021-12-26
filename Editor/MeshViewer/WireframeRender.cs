@@ -11,6 +11,10 @@
         
         public override string DisplayName => "Wireframe";
         
+        public WireframeRender() : base(null)
+        {
+        }
+        
         internal override void Render()
         {
             if(Material == null)

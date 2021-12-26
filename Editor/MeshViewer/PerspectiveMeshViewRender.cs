@@ -5,8 +5,10 @@
 
     public abstract class PerspectiveMeshViewRender : MeshViewRender
     {
-        public override bool IsWireframeSupported => true;
-
+        protected PerspectiveMeshViewRender(MeshViewRender wireframeOverride) : base(wireframeOverride)
+        {
+        }
+        
         internal override void InitializeCamera()
         {
             Camera.orthographic = false;
