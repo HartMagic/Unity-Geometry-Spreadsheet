@@ -50,7 +50,7 @@ namespace GeometrySpreadsheet.Editor
             
             _verticalSplitArea = new VerticalSplitArea(this);
             
-            CreateOrUpdateMeshView();
+            CreateMeshView();
         }
 
         private void Dispose()
@@ -71,11 +71,12 @@ namespace GeometrySpreadsheet.Editor
             Repaint();
         }
 
-        private void CreateOrUpdateMeshView()
+        private void CreateMeshView()
         {
             _meshView?.Dispose();
 
             _meshView = new MeshView(_selectedMesh);
+            _meshView.RegisterRender(new ShadedRender());
         }
     }
 }

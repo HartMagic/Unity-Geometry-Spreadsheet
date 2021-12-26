@@ -29,11 +29,17 @@
                 }
             }
 
+            var subMeshesInfo = string.Empty;
+            if (mesh.subMeshCount > 1)
+            {
+                subMeshesInfo = $", {mesh.subMeshCount} Sub Meshes";
+            }
+
             var uvInfo = stringBuilder.ToString().TrimEnd('|');
             if (string.IsNullOrEmpty(uvInfo))
                 uvInfo = "None";
 
-            return $"{mesh.name}\n{mesh.vertexCount} Vertices, {mesh.triangles.Length/3} Triangles | {uvInfo}";
+            return $"{mesh.name}\n{mesh.vertexCount} Vertices, {mesh.triangles.Length/3} Triangles{subMeshesInfo} | {uvInfo}";
         }
     }
 }
