@@ -2,6 +2,9 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
+    using Renderers;
+    using Renderers.Abstract;
     using UnityEditor;
     using UnityEngine;
 
@@ -36,8 +39,7 @@
             InitializeRender(render);
             _renders.Add(render);
 
-            if (_currentRender == null)
-                _currentRender = render;
+            _currentRender ??= render;
         }
 
         public void SetTarget(Mesh target)
@@ -99,6 +101,25 @@
         }
 
         private void DrawDisplayModeDropDown()
+        {
+            var displayModes = _renders.Select(x => x.DisplayName).ToArray();
+            var maxDisplayMode = MeshViewUtility.GetMaxDisplayMode(displayModes);
+
+            var currentDisplayModeIndex = _renders.IndexOf(_currentRender);
+            var availableDisplayModes = _renders.Select(x => x.IsAvailable).ToArray();
+
+            var displayModeDropDownWidth = EditorStyles.toolbarDropDown.CalcSize(new GUIContent(maxDisplayMode)).x;
+            var displayModeDropDownRect = EditorGUILayout.GetControlRect(GUILayout.Width(displayModeDropDownWidth));
+
+            var displayModeDropDownContent = MeshViewStyles.GetDisplayModeContent(_currentRender);
+            if (EditorGUI.DropdownButton(displayModeDropDownRect, displayModeDropDownContent, FocusType.Passive,
+                EditorStyles.toolbarDropDown))
+            {
+                MeshViewUtility.DrawPopup(displayModeDropDownRect, displayModes, currentDisplayModeIndex, SetDisplayMode, availableDisplayModes);
+            }
+        }
+
+        private void SetDisplayMode(object index)
         {
             
         }

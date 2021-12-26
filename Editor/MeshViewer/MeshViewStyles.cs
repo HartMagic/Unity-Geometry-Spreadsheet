@@ -1,5 +1,7 @@
 ﻿namespace GeometrySpreadsheet.Editor.MeshViewer
 {
+    using Renderers;
+    using Renderers.Abstract;
     using UnityEditor;
     using UnityEngine;
 
@@ -16,5 +18,15 @@
         public const float MeshInfoMargin = 6.0f;
 
         public static readonly GUIContent WireframeToggle = EditorGUIUtility.TrTextContent("Wireframe", "Show wireframe");
+
+        public static readonly GUIContent DisplayModeDropDown = EditorGUIUtility.TrTextContent("", "Change display mode");
+
+        public static GUIContent GetDisplayModeContent(MeshViewRender currentRender)
+        {
+            if(currentRender == null)
+                return new GUIContent("None", DisplayModeDropDown.tooltip);
+            
+            return new GUIContent(currentRender.DisplayName, DisplayModeDropDown.tooltip);
+        }
     }
 }

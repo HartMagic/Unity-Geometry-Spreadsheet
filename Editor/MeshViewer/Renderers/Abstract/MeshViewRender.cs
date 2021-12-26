@@ -1,4 +1,4 @@
-﻿namespace GeometrySpreadsheet.Editor.MeshViewer
+﻿namespace GeometrySpreadsheet.Editor.MeshViewer.Renderers.Abstract
 {
     using System;
     using UnityEditor;
@@ -12,6 +12,8 @@
         public abstract string DisplayName { get; }
         
         public bool IsWireframeSupported => WireframeOverride != null;
+        
+        public virtual bool IsAvailable { get; } = true;
         
         protected Mesh Target { get; private set; }
         

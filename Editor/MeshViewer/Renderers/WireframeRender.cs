@@ -1,5 +1,6 @@
-﻿namespace GeometrySpreadsheet.Editor.MeshViewer
+﻿namespace GeometrySpreadsheet.Editor.MeshViewer.Renderers
 {
+    using Abstract;
     using UnityEditor;
     using UnityEngine;
 

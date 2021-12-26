@@ -1,11 +1,9 @@
-﻿namespace GeometrySpreadsheet.Editor.MeshViewer
+﻿namespace GeometrySpreadsheet.Editor.MeshViewer.Renderers
 {
     using UnityEngine;
 
     public sealed class RenderState
     {
-        
-        
         public float Zoom = 1.0f;
         
         public Vector3 PivotOffset = Vector3.zero;

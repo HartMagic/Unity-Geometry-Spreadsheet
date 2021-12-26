@@ -2,9 +2,8 @@
 {
     using UnityEngine;
 
-    internal class MeshViewSettings
+    public static class MeshViewSettings
     {
-
         public const float DefaultRotationSpeed = 1.0f;
         public const float ShiftRotationSpeed = 3.0f;
 

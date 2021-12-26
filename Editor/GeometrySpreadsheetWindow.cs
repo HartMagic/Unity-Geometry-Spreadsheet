@@ -1,6 +1,7 @@
 namespace GeometrySpreadsheet.Editor
 {
     using MeshViewer;
+    using MeshViewer.Renderers;
     using SplitArea;
     using UnityEditor;
     using UnityEngine;
