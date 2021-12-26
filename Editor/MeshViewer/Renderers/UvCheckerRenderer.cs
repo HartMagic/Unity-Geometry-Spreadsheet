@@ -39,7 +39,10 @@
         
         protected override Material CreateMaterial()
         {
-            var material = new Material(Shader.Find(ShaderName));
+            var material = new Material(Shader.Find(ShaderName))
+            {
+                hideFlags = HideFlags.HideAndDontSave
+            };
             
             var checkerTexture = EditorGUIUtility.LoadRequired(CheckerTextureName) as Texture2D;
             material.SetTexture(MainTexId, checkerTexture);
@@ -49,7 +52,7 @@
             return material;
         }
 
-        public override SettingsPanelCallback GetSettingsPanelCallback()
+        public override SettingsPanelDelegate GetSettingsPanelCallback()
         {
             return DrawUvChannelSettings;
         }

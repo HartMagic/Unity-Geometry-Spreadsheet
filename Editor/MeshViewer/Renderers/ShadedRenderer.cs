@@ -27,7 +27,12 @@
 
         protected override Material CreateMaterial()
         {
-            return new Material(Shader.Find(ShaderName));
+            var material = new Material(Shader.Find(ShaderName))
+            {
+                hideFlags = HideFlags.HideAndDontSave
+            };
+
+            return material;
         }
     }
 }

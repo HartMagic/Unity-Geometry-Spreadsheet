@@ -82,6 +82,7 @@ namespace GeometrySpreadsheet.Editor
             
             _meshView.RegisterRender(new ShadedRenderer(perspectiveWireframeRender));
             _meshView.RegisterRender(new UvCheckerRenderer(perspectiveWireframeRender));
+            _meshView.RegisterRender(new UvLayoutRenderer(null));
         }
     }
 }

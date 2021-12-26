@@ -71,26 +71,44 @@
             if (mesh == null)
                 return "None\n0 Vertices, 0 Triangles | None";
 
-            var stringBuilder = new StringBuilder();
-            for (var i = 4; i < 12; i++)
-            {
-                if (mesh.HasVertexAttribute((VertexAttribute) i))
-                {
-                    stringBuilder.Append($"UV{i - 3} |");
-                }
-            }
+            
 
             var subMeshesInfo = string.Empty;
             if (mesh.subMeshCount > 1)
             {
                 subMeshesInfo = $", {mesh.subMeshCount} Sub Meshes";
             }
+            
+            var stringBuilder = new StringBuilder();
+            for (var i = 4; i < 12; i++)
+            {
+                if (mesh.HasVertexAttribute((VertexAttribute) i))
+                {
+                    stringBuilder.Append($"UV{i - 3}, ");
+                }
+            }
 
-            var uvInfo = stringBuilder.ToString().TrimEnd('|');
+            var uvInfo = stringBuilder.ToString().TrimEnd(' ').TrimEnd(',');
             if (string.IsNullOrEmpty(uvInfo))
                 uvInfo = "None";
 
-            return $"{mesh.name}\n{mesh.vertexCount} Vertices, {mesh.triangles.Length/3} Triangles{subMeshesInfo} | {uvInfo}";
+            var colorInfo = string.Empty;
+            if (mesh.HasVertexAttribute(VertexAttribute.Color))
+                colorInfo = ", Color";
+
+            var blendShapesInfo = string.Empty;
+            if (mesh.blendShapeCount != 0)
+                blendShapesInfo = $", {mesh.blendShapeCount} Blend Shapes";
+
+            var skinWeightsInfo = string.Empty;
+            if (mesh.HasVertexAttribute(VertexAttribute.BlendWeight))
+                skinWeightsInfo = ", Skin Weights";
+
+            var skinIndicesInfo = string.Empty;
+            if (mesh.HasVertexAttribute(VertexAttribute.BlendIndices))
+                skinIndicesInfo = ", Skin Indices";
+
+            return $"{mesh.name}\n{mesh.vertexCount} Vertices, {mesh.triangles.Length/3} Triangles{subMeshesInfo}{blendShapesInfo} | {uvInfo}{colorInfo}{skinIndicesInfo}{skinWeightsInfo}";
         }
     }
 }

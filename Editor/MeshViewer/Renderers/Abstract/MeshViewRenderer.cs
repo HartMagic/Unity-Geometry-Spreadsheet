@@ -5,7 +5,7 @@
     using UnityEngine;
     using Object = UnityEngine.Object;
 
-    public delegate void SettingsPanelCallback(Rect rect);
+    public delegate void SettingsPanelDelegate(Rect rect);
     
     public abstract class MeshViewRenderer : IDisposable
     {
@@ -58,7 +58,7 @@
 
         public abstract void HandleUserInput(Rect rect);
 
-        public virtual SettingsPanelCallback GetSettingsPanelCallback()
+        public virtual SettingsPanelDelegate GetSettingsPanelCallback()
         {
             return null;
         }
@@ -84,7 +84,7 @@
             WireframeOverride?.SetRenderContext(renderUtility);
         }
 
-        public void Dispose()
+        public virtual void Dispose()
         {
             WireframeOverride?.Dispose();
             

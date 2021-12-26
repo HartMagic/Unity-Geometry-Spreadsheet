@@ -48,9 +48,9 @@
                 RenderState.LightDirection = HandlePerspectiveRotation(RenderState.LightDirection, rect);
 
             if(CurrentEvent.button == 2)
-                HandlePerspectivePan(rect, Camera);
+                HandlePerspectivePan(rect);
             
-            HandleZoom(rect, Camera);
+            HandleZoom(rect);
         }
         
         protected sealed override void Render()
@@ -108,24 +108,24 @@
             return direction;
         }
 
-        private void HandlePerspectivePan(Rect rect, Camera camera)
+        private void HandlePerspectivePan(Rect rect)
         {
             if(CurrentEvent.type != EventType.MouseDrag || !rect.Contains(CurrentEvent.mousePosition))
                 return;
             
-            var delta = new Vector3(-CurrentEvent.delta.x * camera.pixelWidth / rect.width,
-                CurrentEvent.delta.y * camera.pixelHeight / rect.height, 0.0f);
+            var delta = new Vector3(-CurrentEvent.delta.x * Camera.pixelWidth / rect.width,
+                CurrentEvent.delta.y * Camera.pixelHeight / rect.height, 0.0f);
 
-            var screenPosition = camera.WorldToScreenPoint(RenderState.PivotOffset);
+            var screenPosition = Camera.WorldToScreenPoint(RenderState.PivotOffset);
             screenPosition += delta;
-            var worldPosition = camera.ScreenToWorldPoint(screenPosition) - RenderState.PivotOffset;
+            var worldPosition = Camera.ScreenToWorldPoint(screenPosition) - RenderState.PivotOffset;
 
             RenderState.PivotOffset += worldPosition;
             
             CurrentEvent.Use();
         }
 
-        private void HandleZoom(Rect rect, Camera camera)
+        private void HandleZoom(Rect rect)
         {
             if (CurrentEvent.type != EventType.ScrollWheel || !rect.Contains(CurrentEvent.mousePosition))
                 return;
@@ -135,11 +135,11 @@
             newZoom = Mathf.Clamp(newZoom, MeshViewSettings.MinZoom, MeshViewSettings.MaxZoom);
             
             var mouseViewPosition = new Vector2(CurrentEvent.mousePosition.x / rect.width, 1.0f - CurrentEvent.mousePosition.y / rect.height);
-            var mouseWorldPosition = camera.ViewportToWorldPoint(mouseViewPosition);
+            var mouseWorldPosition = Camera.ViewportToWorldPoint(mouseViewPosition);
             var mouseToCameraPosition = RenderState.Position - mouseWorldPosition;
             var cameraPosition = mouseWorldPosition + mouseToCameraPosition * (newZoom / RenderState.Zoom);
             
-            camera.transform.position = new Vector3(cameraPosition.x, cameraPosition.y, cameraPosition.z);
+            Camera.transform.position = new Vector3(cameraPosition.x, cameraPosition.y, cameraPosition.z);
 
             RenderState.Zoom = newZoom;
             CurrentEvent.Use();
