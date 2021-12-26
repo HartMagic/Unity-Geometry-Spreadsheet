@@ -8,7 +8,7 @@
         protected PerspectiveMeshViewRender(MeshViewRender wireframeOverride) : base(wireframeOverride)
         {
         }
-        
+
         internal override void InitializeCamera()
         {
             Camera.orthographic = false;
@@ -39,6 +39,26 @@
 
             RenderContext.ambientColor = MeshViewSettings.AmbientColor;
         }
+        
+        protected sealed override void Render()
+        {
+            var rotation = Quaternion.Euler(RenderState.Direction.y, 0.0f, 0.0f) *
+                           Quaternion.Euler(0.0f, RenderState.Direction.x, 0.0f);
+            var position = rotation * -Target.bounds.center;
+
+            var previousFogFlag = RenderSettings.fog;
+            Unsupported.SetRenderSettingsUseFogNoDirty(false);
+            
+            Camera.clearFlags = CameraClearFlags.Nothing;
+
+            var materialPropertyBlock = new MaterialPropertyBlock();
+
+            RenderInternal(position, rotation, materialPropertyBlock);
+            
+            Unsupported.SetRenderSettingsUseFogNoDirty(previousFogFlag);
+        }
+
+        protected abstract void RenderInternal(Vector3 position, Quaternion rotation, MaterialPropertyBlock materialPropertyBlock);
 
         internal override void HandleUserInput(Rect rect)
         {

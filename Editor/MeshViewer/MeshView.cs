@@ -184,12 +184,12 @@
             
             _currentRender.HandleUserInput(rect);
             
-            _currentRender.Render();
+            _currentRender.Draw();
 
             if (_currentRender.IsWireframeSupported && _isWireframeShowed)
             {
                 var wireframeRender = _currentRender.WireframeOverride;
-                wireframeRender?.Render();
+                wireframeRender?.Draw();
             }
         }
 

@@ -43,7 +43,15 @@
             WireframeOverride = wireframeOverride;
         }
 
-        internal abstract void Render();
+        internal void Draw()
+        {
+            if(Material == null)
+                return;
+
+            Render();
+        }
+
+        protected abstract void Render();
 
         internal abstract void InitializeCamera();
         internal abstract void InitializeLights();
